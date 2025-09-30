@@ -1,0 +1,8 @@
+---
+title: "Dr. Brown Codes - installing R and RStudio"
+---
+
+```{r}
+1 + 1
+```
+
