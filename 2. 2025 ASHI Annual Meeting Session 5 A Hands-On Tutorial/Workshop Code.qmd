@@ -1,0 +1,166 @@
+---
+title: "Workshop Code"
+editor: source
+---
+
+# Using immunogenetr for HLA data analysis
+
+# Before we do anything, we need to install two packages that we'll use. This can take a while, so let's do this while the other sessions are ongoing. Run the code chunk below by pressing the green arrow button at the top right of the code chunk:
+
+```{r}
+install.packages("immunogenetr")
+install.packages("tidyverse")
+```
+
+# This is a Quarto document - a way to include text (like this), as well as R code. Additionally, we can see the output of the code in the same document. Let's follow the directions in the document to try out the R package 'immunogenetr' on some HLA data.
+
+# Let's load the packages we need for this session. Run the code chunk below by pressing the green arrow button to load the packages.
+
+```{r}
+# This is a comment - anytime you see something in a code chunk that begins with '#', R does not try to run that as code. It is there for humans to leave comments about the code.
+
+# In this comment we describe what the code below does. In this case, we want to load the 'immunogenetr' and 'tidyverse` packages.
+
+library(immunogenetr)
+library(tidyverse)
+```
+
+# You should see some output indicating it successfully loaded the packages.
+
+# Let's try out some mismatch functions from the 'immunogenetr' package:
+
+```{r}
+# To perform mismatching using immunogenetr, we have to encode HLA genotypes in GL string format. In the two lines of code below we assign HLA-A genotypes for a recipient and donor.
+
+recipient_type <- "HLA-A*02:01+HLA-A*68:01"
+donor_type <- "HLA-A*02:01"
+
+# Now let's use these HLA genotypes in the `HLA_mismatch_logical` function. This is the simplest mismatch function, and will give an output of TRUE or FALSE, depending on if a mismatch is present. Here is how we set up the function:
+
+HLA_mismatch_logical(
+  GL_string_recip = recipient_type, # We put the recipient genotype here.
+  GL_string_donor = donor_type,     # We put the donor genotype here.
+  loci = "HLA-A",                   # We put the HLA locus we want to perform mismatching at here.
+  direction = "GvH"                 # We put the direction we want to perform mismatching at here.
+)
+```
+
+# If you have time, try playing around with using different inputs in the function above. As a hint, the possible `direction` arguments you can use are "GvH", "HvG", "bidirectional", and "SOT".
+
+# Now let's try this with a different function, `HLA_mismatch_alleles`:
+
+```{r}
+recipient_type <- "HLA-A*03:01+HLA-A*68:01"
+donor_type <- "HLA-A*02:01"
+
+HLA_mismatch_alleles(
+  GL_string_recip = recipient_type, 
+  GL_string_donor = donor_type,     
+  loci = "HLA-A",                   
+  direction = "SOT",                 
+  homozygous_count = 1  # The `HLA_mismatch_alleles` function adds a new parameter,`homozygous_count`, which can be either 1 or 2.
+)
+```
+
+# Try switching the `homozygous_count` argument between 1 and 2 and see what happens.
+
+# The final mismatch function is `HLA_mismatch_number`. Can you guess based on the name what this function will do?
+
+```{r}
+recipient_type <- "HLA-A*68:01"
+donor_type <- "HLA-A*02:01"
+
+HLA_mismatch_number(
+  GL_string_recip = recipient_type, 
+  GL_string_donor = donor_type,     
+  loci = "HLA-A",                   
+  direction = "SOT",                 
+  homozygous_count = 2              # The `HLA_mismatch_number` function also uses the parameter `homozygous_count`.
+)
+```
+
+# Were you surprised that the output of the code above was "2"? What would you change in the code above if you thought the output should be "1"?
+
+# The code examples above are all very basic. Let's look at some data that is closer to what we would see in our Laboratory Information Systems (LISs):
+
+```{r}
+# immunogenetr contains some sample data to play around with: "HLA_typing_LIS" contains a table very similar to a real LIS. Let's take a look at it:
+
+(HLA_typing_LIS)
+```
+
+# Take a look at the table above. You can scroll through the table by pressing the little black arrow at the top right of the table.
+
+# This is a very common way to store HLA data - each allele is in a single column. We can't directly calculate mismatches from this data using immunogentr, as it requires GL strings as an input. However, immunogenetr has a very helpful function to easily turn this type of data into GL strings. Let's try it out:
+
+```{r}
+# The function "HLA_columns_to_GLstring" is used to take the type of data in the table above and convert it to a GL string in a single step. We can set up the function to make a new column with the GL strings like this:
+
+(HLA_typing_LIS_GL_strings <- HLA_typing_LIS # In this line we say we want to make a new table called 'HLA_typing_LIS_GL_strings'.
+  %>% mutate(                                # The `mutate` function creates a new column in the table.
+    GLstring = HLA_columns_to_GLstring(      # Here we tell `mutate` the new column will be called 'GLstring', and we will fill 
+                                             # it with data from the function `HLA_columns_to_GLstring'.
+      .,                                     # The period is a placeholder, and tells the function to get the data from the table 
+                                             # we are working on.
+      HLA_typing_columns = mA1Cd.recipient:mDPB12cd.recipient, # This tells the function which columns contain the HLA genotype.
+      prefix_to_remove = "m",                # If we look at the table above, we can see that the locus name has an "m" before it.
+      suffix_to_remove = "Cd.recipient"      # Likewise, there is a bunch of letters after the locus name, which will confuse the
+                                             # function.
+    ), .after = patient                      # This tells `mutate` to put the new column after the 'patient' column.
+  )
+ )
+```
+
+# You should see that the table now has a new column (scroll to the right if you can't see it) with the complete HLA genotype of each patient in a GL string. Let's use this typing to perform some summary matching of a recipient versus multiple donors.
+
+```{r}
+# We'll take one of the patients from this table as our HCT candidate:
+
+(HLA_typing_LIS_GL_strings_candidate <- HLA_typing_LIS_GL_strings
+  %>% filter(patient == 3)  # We are arbitrarily choosing the third patient as our candidate.
+  %>% pull(GLstring)        # Here we keep only the value from the 'GLstring' column.
+ )
+
+# Now we'll make a table of potential donors and clean it up a bit:
+(HLA_typing_LIS_GL_strings_donor <- HLA_typing_LIS_GL_strings
+  %>% select(patient, GLstring) # These are the only 2 columns we want in our donor table.
+  %>% rename(donor = patient)   # We'll rename the 'patient' column to 'donor' since we will use these as donors.
+  )
+
+# Now we'll add our candidate typing to the donor table to perform matching:
+
+(match_grades <- HLA_typing_LIS_GL_strings_donor
+  %>% mutate(candidate = HLA_typing_LIS_GL_strings_candidate) # This copies the candidate HLA genotype to the new 
+                                                              # column 'candidate'.
+  %>% mutate(match_score = HLA_match_summary_HCT(
+    GL_string_recip = candidate,  # This is the column with our recipient genotype.
+    GL_string_donor = GLstring,   # This is the column with our donor genotypes.
+    direction = "bidirectional",  # We'll perform bidirectional matching, like NMDP does.
+    match_grade = "Xof10"         # This is telling the function to perform matching at the HLA-A, B, C, DRB1 and DQB1 loci.
+  ))
+  %>% select(donor, match_score, GLstring, candidate) # Rearrange the columns for easier viewing.
+  %>% arrange(desc(match_score))  # Arrange the table so the best-matched donor is at the top.
+  )
+```
+
+# Using the code above we can see that donor 3 is the only 10/10 match for the HCT candidate.
+
+# Before we finish I want to point out some limitations of the immunogenetr matching/mismatching functions:
+
+```{r}
+# Let's take a look at these two DRB1 genotypes:
+
+recipient_type <- "HLA-DRB1*01:01+HLA-DRB1*14:01"
+donor_type <- "HLA-DRB1*01:01+HLA-DRB1*14:54"
+
+# What do you notice about these genotypes? What do you think will happen if we ask immunogenetr if there are any mismatches?
+
+HLA_mismatch_alleles(
+  recipient_type,
+  donor_type,
+  loci = "HLA-DRB1",
+  direction = "HvG"
+)
+```
+
+# Are you surprised DRB1*14:54 was output as a mismatch, compared to DRB1*14:01? This is intentional - the mismatch logic is complex enough. If you want to consider alleles within a P or G group to be matched, you will have to do this in a separate informatic step. Luckily, NMDP has a great service for doing this, py-ard (https://py-ard.org/). You'll have to ask them to give you a tour of that...
