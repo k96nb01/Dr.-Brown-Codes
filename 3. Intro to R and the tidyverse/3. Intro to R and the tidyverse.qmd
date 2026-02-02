@@ -1,0 +1,234 @@
+---
+title: "3. Intro to R and the tidyverse"
+---
+
+# This is a Quarto document - a way to include text (like this) as well as code, like below:
+
+```{r}
+# This is a code chunk. Everything between the three back ticks (```) above and below is code. The document knows this is code written in R because of the "r" inside the curly brackets at the end of line 7 ({r}). Let's run some code.
+
+# The code below installs the two packages (libraries) we will need for this session - tidyverse and immunogenetr. Run this code chunk by pressing the small green arrow at the top right of this code chunk.
+install.packages("tidyverse")
+install.packages("immunogenetr")
+```
+
+```{r}
+# Great, we've installed the packages we need. Before we use them, we need to load them, using the code below:
+
+library(tidyverse)
+library(immunogenetr)
+```
+
+# Using functions in R.
+
+## We've already used two functions (`install.packages` and `library`). You can see functions are simply the name of the function followed by parentheses (). Inside those parentheses are where we put the settings for the functions. Those settings are called "parameters" or "arguments." Let's look at another function called `print`. Here's what I'd like you to do: in the console, the pane on the bottom, type "?print" and hit enter.
+
+# You should see on the bottom-right pane a help file for the `print` function. This help file provides information about how to use the function. You can see the `print` function can take two settings "x" and "...". The second setting, "...", basically means you can put many different things in there. The first, though, "x" is a required setting. It is the thing that will be printed out by the function. Try running the line of code below to run the `print` function on something called "HLA_dictionary".
+
+```{r}
+print(HLA_dictionary)
+```
+# Did you see anything pop out of your printer? Hopefully not, because the `print` function actually displays something on your screen, and does not send anything to your printer!. You should see a table of data from the HLA dictionary right above this. This is a "tibble", which is a type of data frame. You can think of a tibble or data frame as very similar to a spreadsheet. See if you can figure out how to scroll through the tibble to see all the data there.
+
+# Now it's your turn to write some code in the chunk below. Use the `print` function to take a look at a tibble called "HLA_typing_1". 
+```{r}
+
+```
+
+
+
+
+
+# Solution: the code `print(HLA_typing_1)` would have worked.
+
+# The pipe.
+
+## Before we learn any more functions, I want to introduce a very helpful function called the pipe. The pipe looks like this `%>%`. The pipe is a convienent way to inject your argument into your function, which makes your code easier to read. Let's look at the code below:
+
+```{r}
+HLA_typing_1 %>% print()
+```
+# The code `print(HLA_typing_1)` and `HLA_typing_1 %>% print()` accomplish the same thing. We can read the pipe as "then," meaning we can read the code `HLA_typing_1 %>% print()` as "take the object called 'HLA_typing_1' then show it." The pipe becomes much more useful when we start using more than one function on our data, which we often do. Let's take another example:
+
+```{r}
+# Let's use a new function called `select`. The `select` function allows us to keep specific columns of a tibble. We'll use the pipe to set it up. Look at this line of code and see if you can figure out what it is going to do:
+
+HLA_typing_1 %>% select(patient, A1) %>% print()
+```
+
+# The `select` function subsets a tibble, and the `print` function showed us what that new tibble looks like. You can also see that the pipe allows us to easily read code: "take the object called 'HLA_typing_1', then select the 'patient' and 'A1' columns, then show the results." Another cool thing we can do in R is format our code to make it easier to read. Look at the next code chunk:
+
+```{r}
+# This is the same line of code as above, just reformatted. You can see how having each line of code on its own line makes it easier to read. We can do this in R because spaces, indentation, and new lines don't matter - we can use all of these to format our code for easier reading!
+
+HLA_typing_1 %>% 
+  select(patient, A1) %>% 
+  print()
+```
+
+# Let's play around with the `select` function a bit more.
+
+```{r}
+# Below is an incomplete line of code. Set it up to keep the patient columns, and all HLA-A, B and C columns. Hint: you can separate each column you want with a comma, or you can use ":" to take all the columns between two selected columns.
+
+HLA_typing_1 %>% 
+  select() %>% # Write some code here to select the patient, HLA-A, B and C columns.
+  print()
+```
+
+
+
+
+
+
+
+# Solution: the code `select(patient:B2)` would work, as would `select(patient, A1, A2, B1, B2, C1, C2)`. When writing code, there are often many ways to accomplish the same thing!
+
+# Now that we've learned about the `select` function, let's move onto another very useful function, `filter`:
+
+```{r}
+# While `select` subsets a tibble by columns, `filter` subsets a tibble by rows. Take a look at the code below and see if you can figure out what it will do:
+
+HLA_typing_1 %>% 
+  filter(A1 == "A*01:01") %>% 
+  print()
+```
+
+# You can see that we kept any row where column "A1" had the value of "A*01:01". It also may seem weird that we had to use two equals signs "==". That's because that's how R handles what are known as "relational operators", and "==" is the "equality operator". Interestingly, "!=" is the "inequality operator", i.e. "not equal." Let's see what would happen if we use "!=" instead:
+
+```{r}
+HLA_typing_1 %>% 
+  filter(A1 != "A*01:01") %>%  # Note the operator in this line of code.
+  print()
+```
+
+# The `filter` function is really usefull. Let's try writing a full line of code using the functions we've learned so far:
+
+```{r}
+# Write a line of code that will take the HLA_typing_1 tibble, filter for "C*07:18" in the "C1" column, then select for the columns "patient, C1, C2, DRB1_1 and DRB1_2", then print the result.
+
+
+```
+
+
+
+
+
+# Solution: this code would work: 
+HLA_typing_1 %>% 
+  filter(C1 == "C*07:18") %>% 
+  select(patient, C1:C2, DRB1_1:DRB1_2) %>% 
+  print()
+  
+# We've learned quite a bit so far, but I want to introduce one last function: `mutate`. This function makes a new column, or changes the data in an existing column. Let's see how it works:
+
+```{r}
+# The line of code below takes the "HLA_typing_1" tibble, selects two columns, and then uses `mutate` to make a new column called "A1_new", and fills it with data from the "A1" column.
+
+HLA_typing_1 %>% 
+  select(patient, A1) %>% 
+  mutate(A1_new = A1) %>% 
+  print()
+```
+
+# `mutate` is an incredibly useful function, as it can change your data in specific ways by using other functions inside of the `mutate` function. Functions inside of functions - it's like Inception! Let's play around with a new function that will be useful for changing HLA data:
+
+```{r}
+# Let's play around with the `HLA_truncate` function, which is a function from the immunogenetr package. Run the code below, see what happens, and see if you can truncate the allele to one field:
+
+HLA_truncate("HLA-A*02:01:03:14")
+```
+
+
+
+
+
+
+# Solution: this code would truncate to one field:
+HLA_truncate("HLA-A*02:01:03:14", fields = 1)
+
+
+
+```{r}
+# `mutate` can also be used to change data without making a new column:
+
+HLA_typing_1 %>% 
+  mutate(A1 = HLA_truncate(A1, fields = 1)) %>% 
+  print()
+```
+
+# `mutate` can be really useful to change data in a column, but be careful - it is sometimes better to make new columns with the new data.
+
+# We've learned the three basic functions of the tidyverse: `select` subsets tibbles by columns, `filter` subsets tibbles by rows, and `mutate` creates new columns of data. Let's end this session with some practice. Write code as described in each of the prompts below:
+
+```{r}
+# Prompt 1:
+# Write code to simplify the "HLA_typing_LIS" table to keep only the "patient", "mB1Cd.recipient", and "mB2Cd.recipient" columns.
+
+
+```
+
+```{r}
+# Prompt 2:
+# Take the code from prompt 1 and revise it to keep only rows where "mB1Cd.recipient" contains the allele "08:01". How many rows do you end up with?
+
+
+```
+
+```{r}
+# Prompt 3:
+# Take the "HLA_dictionary" table and create a new column that will truncate the data from the "HLA.Allele" column to 2 fields. Reminder - `HLA_truncate` will be useful.
+
+
+```
+
+```{r}
+# Prompt 4:
+# Take the code from above and, after you have truncated the alleles to two fields, format the alleles in compliant WHO nomenclature, with "HLA-" at the beginning. Hint - `HLA_prefix_add` may be of interest to you. Look up it's help file to see how to use it.
+
+
+```
+
+```{r}
+# Prompt 5:
+# Lastly, take the code from above an add one more line. This time, create a new column that removes the "HLA-" prefix. See if you can find a function that does this, and figure out how to set up the parameters so that the locus (A, B, DRB1, etc.) is retained.
+
+
+```
+
+
+
+
+
+# Answers. The following code would work for each prompt:
+
+# Prompt 1:
+HLA_typing_LIS %>% 
+  select(patient, mB1Cd.recipient, mB2Cd.recipient) %>% 
+  print()
+  
+# Prompt 2:
+HLA_typing_LIS %>% 
+  select(patient, mB1Cd.recipient, mB2Cd.recipient) %>% 
+  filter(mB1Cd.recipient == "08:01") %>% 
+  print() 
+  # Only 2 rows remain.
+  
+# Prompt 3:  
+HLA_dictionary %>% 
+  mutate(HLA.Allele.truncated = HLA_truncate(HLA.Allele)) %>% 
+  print()
+  
+# Prompt 4:
+HLA_dictionary %>% 
+  mutate(HLA.Allele.truncated = HLA_truncate(HLA.Allele)) %>% 
+  mutate(HLA_formatted = HLA_prefix_add(HLA.Allele.truncated)) %>% 
+  print()
+  
+# Prompt 5:
+HLA_dictionary %>% 
+  mutate(HLA.Allele.truncated = HLA_truncate(HLA.Allele)) %>% 
+  mutate(HLA_formatted = HLA_prefix_add(HLA.Allele.truncated)) %>% 
+  mutate(HLA_reformatted = HLA_prefix_remove(HLA_formatted, keep_locus = TRUE)) %>% 
+  print()
+  
