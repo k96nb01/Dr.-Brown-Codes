@@ -1,5 +1,5 @@
 ---
-title: "3. Intro to R and the tidyverse"
+title: "4. Intro to R and the tidyverse"
 ---
 
 # This is a Quarto document - a way to include text (like this) as well as code, like below:
